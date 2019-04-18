@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd ">
+	
+	<!-- IOC的控制反转是通过bean标签的加载完成的 -->
+	<!-- id:每一个javaBean都有一个唯一表示，程序员自定义的 -->
+	<!-- class:是目标类，把创建对象的权力交给spring的类 -->
+	<bean id="hello" class="pojo.Hello"></bean>
+	<!-- 别名标签：alias -->
+	  <!-- name：固定写法==对应 ==bean标签中的id的值 -->
+	<!-- alias：别名，程序员的自定义写法 -->
+	<alias name="hello" alias="翠花"/>
+	<alias name="hello" alias="如花"/>
+	
+	<!-- 扩展问题1：两个相同的bean标签 通过id去获取对象-->
+	<!-- 答案：此时会报错 -->
+	<!-- <bean id="helloA" class="pojo.Hello"></bean>
+	<bean id="helloA" class="pojo.Hello"></bean>  -->
+	
+	<!-- 拓展问题2：两个相同的class类型的Bean标签，此时加载配置文件会报错吗，
+	通过getBean(Hello.class)类型获取对象有错吗 -->
+	<!-- <bean id="hello1" class="pojo.Hello"></bean>
+	<bean id="hello2" class="pojo.Hello"></bean> -->
+	
+
+</beans>
+
+---------------------------------------------------------------
+package pojo;
+
+//普通的JavaBean：成员变量和成员变量的getset方法
+public class Hello {
+	
+	public void sayHi() {
+		System.out.println("spring你好，春天你好");	
+	}
+
+}
+---------------------------------------------------------------
+package test;
+
+import javax.naming.Context;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import pojo.Hello;
+
+//单元测试的工具类
+public class TestUtil {
+	
+	@Test
+	public void test01() {
+		//spring的IOC，进行对象的创建
+		/*1.加载配置文件(加载时，spring自动创建对象到内存)
+		 * 2.获取javabean对象(通过<bean> id="hello">)
+		 */
+		//ApplicationContext专门进行配置文件的加载
+	    ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+	    //类路径的xml
+	    //<bean id="hello">-- 对应--getBean(id的值)
+	    Hello hello = (Hello) context.getBean("hello");
+	    hello.sayHi();
+	    
+	}
+	@Test
+	public void test02() {
+		/*1.加载配置文件
+		 * 2.获取javaBean的对象（通过<bean class="pojo.Hello">）
+		 * 
+		 */
+		ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+		//<bean class="pojo.Hello">--对应--getBean（类名.class）
+		Hello hello = context.getBean(Hello.class);
+		hello.sayHi();
+	}
+	
+	@Test
+	public void test03() {
+		/*1.加载位置文件
+		 *  //先在配置文件中，配置一个别名标签
+		 * 2.获取javaBean的对象（通过别名标签：<alias alias="别名">）
+		 * 
+		 */
+		ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+	    //<alias alias="别名">
+		Hello hello = (Hello) context.getBean("翠花");
+	    hello.sayHi();
+	}
+	
+	//成员变量，也叫全局变量
+	ApplicationContext context = null;//加载配置文件的对象
+	
+	@Before
+	public void before() {
+		//在进行test单元测试之前，自动执行该方法
+		context = new ClassPathXmlApplicationContext("applicationContext.xml");
+	}
+	
+	@Test
+	public void test04() {//两个相同id的Bean
+		Hello hello= (Hello) context.getBean("helloA");//HelloA会报错，在before报错
+		hello.sayHi();
+	}
+	@Test
+	public void test05() {//相同class的Bean
+		Hello hello= (Hello) context.getBean(Hello.class);//通过class去获取会报错，找不到单一的对象
+		hello.sayHi();
+		
+	}
+}
+
