@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd ">
+	
+	<!-- spring的IOC容器，在加载配置文件时，生成的对象默认是单例的
+	   scope="singleton"表示单例 -->
+	<!-- <bean id="user" class="pojo.User" scope="singleton"></bean>  -->
+	
+	<!-- 多例模式 scope="prototype",在进行获取Bean对象时，才会生成一个对象-->
+	 <bean id="user" class="pojo.User" scope="prototype"></bean> 
+</beans>
+----------------------------------------------------------------------------------
+package pojo;
+
+public class User {
+	//构造方法：专门用于测试，创建对象的过程
+	public User() {
+		System.out.println("无参的构造方法");
+	}
+
+}
+----------------------------------------------------------------------------------
+package test;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import pojo.User;
+
+public class TestUtil {
+
+	
+	//成员变量
+	ApplicationContext context=null;
+	
+	@Before
+	public void before(){
+		context=new ClassPathXmlApplicationContext("applicationContext.xml");
+	}
+	
+	@Test
+	public void test01(){
+		User user1=(User) context.getBean("user");
+		User user2=(User) context.getBean("user");
+	    System.out.println("user1的内存地址"+user1);
+	    System.out.println("user2的内存地址"+user2);
+	}
+}
