@@ -160,7 +160,10 @@ public class Dog {
 	         <property name="dog" ref="dog"></property>
 	   </bean> 
 	   <!-- 依赖注入：dog对象被user对象所依赖 -->
-	  <bean id="dog" class="pojo.Dog"></bean>     
+	  <bean id="dog" class="pojo.Dog">
+	      <property name="name" value="呵呵"></property>
+	      <property name="age" value="2"></property>
+	  </bean>     
 
 </beans>
 ---------------------------------------------------------------------------------------------------------
@@ -194,4 +197,4 @@ public class TestUtil {
 User [name=吴彦祖, age=10, list=[青翼蝠王, 白眉鹰王, 紫衫龙王, 金毛狮王], set=[张无忌], 
 map={老大=孙悟空, 老二=猪八戒, 老三=沙悟净, 老四=小白龙}, array=[宋江, 武松, 卢俊义, 1], 
 prop={jdbc.url=jdbc:mysql://local:3306/teduweb, jdbc.username=root, jdbc.driver=com.mysql.jdbc.Driver, jdbc.password=12345678}, 
-dog=Dog [name=null, age=0]]
+dog=Dog [name=呵呵, age=2]]
