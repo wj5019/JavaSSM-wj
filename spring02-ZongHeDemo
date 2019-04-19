@@ -1,0 +1,148 @@
+package pojo;
+
+public class Person {
+	private String name;
+	private int age;
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public int getAge() {
+		return age;
+	}
+	public void setAge(int age) {
+		this.age = age;
+	}
+	@Override
+	public String toString() {
+		return "Person [name=" + name + ", age=" + age + "]";
+	}
+	
+
+}
+-------------------------------------------------------------------------
+package dao;
+
+import pojo.Person;
+
+//数据访问层，专门进行增删改查数据库的
+public class PersonDao {
+	//dao层依赖于pojo层也就是person对象,所以把person当成参数输入进来
+	//注意，person对象用于数据的封装
+	public void addPerson(Person person) {
+		System.out.println("成功添加了一个用户");
+	}
+
+}
+-----------------------------------------------------------------------------
+package service;
+
+import dao.PersonDao;
+import pojo.Person;
+
+//专门用于业务逻辑层的处理
+//需要调用dao层的方法
+public class PersonService {
+	//成员变量
+	private PersonDao dao ;
+	//set方法，进行spring的DI依赖注入
+	public void setDao(PersonDao dao) {
+		this.dao = dao;
+	}
+	//自定义方法，完成调用dao层的逻辑,把person封装插入到数据库
+	public void addPerson(Person person) {
+		dao.addPerson(person);
+	}
+	
+
+}
+------------------------------------------------------------------
+package controller;
+
+
+import pojo.Person;
+import service.PersonService;
+
+//控制层，专门处理和控制请求的
+//需要调用service层的方法
+//类比：user对象-->dog对象
+//现在：controller对象-->service对象
+public class PersonController {
+	//成员变量
+	private PersonService personService;
+	
+	public void setPersonService(PersonService personService) {
+		this.personService = personService;
+	}
+	//自定义方法，调用service方法
+	public void addPerson(Person person) {
+		personService.addPerson(person);
+	}
+	
+	
+
+}
+-----------------------------------------------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd ">
+	
+	<!-- 综合运用：使用spring的IOC与DI -->
+	<!-- IOC的使用 ：就是编写一个bean标签-->
+	<!-- DI的使用：就是编写一个property标签 -->
+	<!-- id是自己命名的 -->
+	<bean id="person" class="pojo.Person">
+	    <property name="name" value="杨过"></property>
+	    <property name="age" value="10"></property>
+	</bean>
+	<bean id="personDao" class="dao.PersonDao">
+	    <!-- bean里面什么都没有 -->
+	</bean>
+	<bean id="personService" class="service.PersonService">
+	     <property name="dao" ref="personDao"></property><!-- ref是引用，引用的personDao -->
+	</bean>
+	<bean id="personController" class="controller.PersonController">
+	     <property name="personService" ref="personService"></property><!-- 把set后面首字母变小写 -->
+	</bean>
+	
+</beans>
+-----------------------------------------------------------------------------------
+package test;
+
+
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import controller.PersonController;
+import pojo.Person;
+
+public class TestUtil {
+	ApplicationContext context = null;
+	
+	@Before
+	public void before() {
+		context = new ClassPathXmlApplicationContext("applicationContext.xml");
+	}
+	
+	@Test
+	public void test01() {
+		//通过id获取bean对象
+		//数据来源，已经通过IOD与DI，生成了一个对象
+		Person person = (Person) context.getBean("person");
+		//获取controller层对象
+		//请求的控制层，也是调用的发起者
+		PersonController pc = (PersonController) context.getBean("personController");
+		//调用方法
+		pc.addPerson(person);
+
+	}
+
+}
+-----------------------------------------------------------------------
+结果：成功添加了一个用户
