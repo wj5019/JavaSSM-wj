@@ -1,0 +1,65 @@
+package pojo;
+
+//专门用于DI依赖注入的构造方法注入！！！！！！！
+public class User {
+	//成员变量
+	private String name;
+	private int age;
+	//构造方法:有参的构造
+	public User(String name,int age) {
+		this.name=name;//赋值
+		this.age=age;//赋值
+	}
+	@Override
+	public String toString() {
+		return "User [name=" + name + ", age=" + age + "]";
+	}
+
+}
+---------------------------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd ">
+	
+	<!-- DI构造方法的依赖注入 -->
+	<bean id="user" class="pojo.User">
+	<!-- constructor -->
+	<!-- constructor-arg标签 
+	 name="构造方法中的形参"  public User(String name,int age) 形参是String name,int age
+	 index="下标"，指的是形参的位置，从0开始数数
+	 -->
+	<constructor-arg index="0" value="张三丰" type="java.lang.String"></constructor-arg>
+	<constructor-arg index="1" value="10" type="int"></constructor-arg>
+	</bean>
+	
+</beans>
+----------------------------------------------------------------------
+package test;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import pojo.User;
+
+public class TestUtil {
+	ApplicationContext context = null;
+	
+	@Before
+	public void before() {
+		context = new ClassPathXmlApplicationContext("applicationContext.xml");
+	}
+	
+	@Test
+	public void test01() {
+		//通过id获取bean对象
+		User user = (User) context.getBean("user");
+		System.out.println(user);
+	}
+
+}
+----------------------------------------------------------
+结果：User [name=张三丰, age=10]
