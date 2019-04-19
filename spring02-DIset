@@ -1,0 +1,197 @@
+//专门用于测试spring的DI依赖注入！！！
+public class User {
+	//成员变量：简单的数据类型
+	private String name;
+	private int age;
+	//成员变量：复杂的数据类型
+	private List list;
+	private Set set;//自动去重的集合
+	private Map map;//key=value键值对的映射集合
+	private String[] array;//字符串类型的数组
+	private Properties prop;//配置文件类型，jdbc的配置
+	//成员变量：引用数据类型
+	private Dog dog;//user对象中，又有dog对象
+	
+	
+	public Dog getDog() {
+		return dog;
+	}
+	public void setDog(Dog dog) {
+		this.dog = dog;
+	}
+	public Properties getProp() {
+		return prop;
+	}
+	public void setProp(Properties prop) {
+		this.prop = prop;
+	}
+	public String[] getArray() {
+		return array;
+	}
+	public void setArray(String[] array) {
+		this.array = array;
+	}
+	public Map getMap() {
+		return map;
+	}
+	public void setMap(Map map) {
+		this.map = map;
+	}
+	public Set getSet() {
+		return set;
+	}
+	public void setSet(Set set) {
+		this.set = set;
+	}
+	public List getList() {
+		return list;
+	}
+	public void setList(List list) {
+		this.list = list;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName123(String name) {//****
+		this.name = name;
+	}
+	public int getAge() {
+		return age;
+	}
+	public void setAge(int age) {
+		this.age = age;
+	}
+	@Override
+	public String toString() {
+		return "User [name=" + name + ", age=" + age + ", list=" + list + ", set=" + set + ", map=" + map + ", array="
+				+ Arrays.toString(array) + ", prop=" + prop + ", dog=" + dog + "]";
+	}
+	
+
+
+}
+-----------------------------------------------------------------------------------------------
+package pojo;
+
+public class Dog {
+	private String name;
+	private int age;
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public int getAge() {
+		return age;
+	}
+	public void setAge(int age) {
+		this.age = age;
+	}
+	@Override
+	public String toString() {
+		return "Dog [name=" + name + ", age=" + age + "]";
+	}
+
+}
+-------------------------------------------------------------------------------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd ">
+	
+	<!-- DI：依赖注入 -->
+	<bean id="user" class="pojo.User">
+	<!-- 使用set方式进行注入值 name="set方法名的属性"
+	       setxxx()方法，那么name="xxx"
+	       setxxx()进行拆分，获取到xxx，首字母小写-->
+	<!-- spring能自动识别，可以全加"" -->
+	       <property name="name123" value="吴彦祖"></property>
+	       <property name="age" value="10"></property>
+	<!--复杂的数据类型：list  -->
+	       <property name="list">
+	            <list>
+	                <value>青翼蝠王</value>
+	                <value>白眉鹰王</value>
+	                <value>紫衫龙王</value>
+	                <value>金毛狮王</value>
+	            </list>
+	       </property>
+	 <!--复杂的数据类型：set 最后只有一个张无忌 -->
+	       <property name="set">
+	           <set>
+	                 <value>张无忌</value>
+	                 <value>张无忌</value>
+	                 <value>张无忌</value>
+	                 <value>张无忌</value>
+	          </set>
+	        </property>
+	  <!--复杂的数据类型：map -->
+	         <property name="map">
+	           <map>
+	                 <entry key="老大" value="孙悟空"></entry>
+	                 <entry key="老二" value="猪八戒"></entry>
+	                 <entry key="老三" value="沙悟净"></entry>
+	                 <entry key="老四" value="小白龙"></entry>
+	          </map>
+	        </property>
+	    <!-- 复杂数据类型：array数组 -->
+	          <property name="array">
+	             <array>
+	                  <value>宋江</value>
+	                  <value>武松</value>
+	                  <value>卢俊义</value> 
+	                  <value>1</value> 
+	             </array>
+	          </property>
+	    <!-- 复杂数据类型：properties配置文件类型 -->     
+	          <property name="prop">
+	             <props>
+	                  <prop key="jdbc.driver">com.mysql.jdbc.Driver</prop>
+	                  <prop key="jdbc.url">jdbc:mysql://local:3306/teduweb</prop>
+	                  <prop key="jdbc.username">root</prop>
+	                  <prop key="jdbc.password">12345678</prop>
+	             </props>
+	          </property>  
+	     <!-- 引用数据类型：user需要依赖dog对象 -->
+	     <!-- name="dog":setDog()方法中的dog -->
+	     <!-- ref="dog":指的是<bean id=""dog>的id的值 -->
+	         <property name="dog" ref="dog"></property>
+	   </bean> 
+	   <!-- 依赖注入：dog对象被user对象所依赖 -->
+	  <bean id="dog" class="pojo.Dog"></bean>     
+
+</beans>
+---------------------------------------------------------------------------------------------------------
+package test;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import pojo.User;
+
+public class TestUtil {
+	ApplicationContext context = null;
+	
+	@Before
+	public void before() {
+		context = new ClassPathXmlApplicationContext("applicationContext.xml");
+	}
+	
+	@Test
+	public void test01() {
+		//通过id获取bean对象
+		User user = (User) context.getBean("user");
+		System.out.println(user);
+	}
+
+}
+--------------------------------------------------------------------------
+结果：
+User [name=吴彦祖, age=10, list=[青翼蝠王, 白眉鹰王, 紫衫龙王, 金毛狮王], set=[张无忌], 
+map={老大=孙悟空, 老二=猪八戒, 老三=沙悟净, 老四=小白龙}, array=[宋江, 武松, 卢俊义, 1], 
+prop={jdbc.url=jdbc:mysql://local:3306/teduweb, jdbc.username=root, jdbc.driver=com.mysql.jdbc.Driver, jdbc.password=12345678}, 
+dog=Dog [name=null, age=0]]
