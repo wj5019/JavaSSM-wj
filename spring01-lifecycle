@@ -1,0 +1,67 @@
+package pojo;
+
+//用于测试user对象的生命周期
+public class User {
+	//对象的实例化方法：创建对象
+	public User() {
+		System.out.println("user对象的创建");
+	}
+	
+	//对象的初始化方法：设置对象的属性
+	public void init() {
+		System.out.println("user对象的初始化");
+	}
+	
+	//对象的自定义方法
+	public void sleep() {
+		System.out.println("user对象的行为方法");
+	}
+	
+	//对象的销毁方法：当用户不再使用时，进行对象消除
+	public void destroy() {
+		System.out.println("user对象被销毁了");
+	}
+
+}
+-------------------------------------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd ">
+	
+	<!-- 对象的生命周期 init-method="类中的初始化方法" -->
+	<bean id="user" class="pojo.User" init-method="init" destroy-method="destroy"></bean>
+	
+</beans>
+----------------------------------------------------------------------
+package test;
+
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.AbstractApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import pojo.User;
+
+public class TestUtil {
+	@Test
+	public void test01() {
+		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml");
+		User user = (User) context.getBean("user");
+		user.sleep();
+		//如果要测试销毁对象的方法需要使用Close（）方法关闭对象context
+		//注意，在使用close方法时，需要修改context的类型
+		context.close();
+	}
+	
+}
+---------------------------------------------------------------------------
+结果：user对象的创建
+user对象的初始化
+user对象的行为方法
+四月 19, 2019 4:19:30 下午 org.springframework.context.support.AbstractApplicationContext doClose
+信息: Closing org.springframework.context.support.ClassPathXmlApplicationContext@9e89d68: startup date [Fri Apr 19 16:19:30 GMT+08:00 2019]; root of context hierarchy
+四月 19, 2019 4:19:30 下午 org.springframework.beans.factory.support.DefaultSingletonBeanRegistry destroySingletons
+信息: Destroying singletons in org.springframework.beans.factory.support.DefaultListableBeanFactory@28d25987: defining beans [user]; root of factory hierarchy
+user对象被销毁了
