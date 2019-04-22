@@ -1,0 +1,112 @@
+package pojo;
+
+public class Cat {
+	private String name;
+	private int age;
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public int getAge() {
+		return age;
+	}
+	public void setAge(int age) {
+		this.age = age;
+	}
+	@Override
+	public String toString() {
+		return "Cat [name=" + name + ", age=" + age + "]";
+	}
+	
+}
+-----------------------------------------------------------------
+package pojo;
+
+public class Dog {
+	private String name;
+	private int age;
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public int getAge() {
+		return age;
+	}
+	public void setAge(int age) {
+		this.age = age;
+	}
+	@Override
+	public String toString() {
+		return "Dog [name=" + name + ", age=" + age + "]";
+	}
+	
+
+}
+--------------------------------------------------------------------
+package pojo;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+public class User {
+	@Autowired
+	private Cat cat;
+	@Autowired
+	private Dog dog;
+	@Override
+	public String toString() {
+		return "User [cat=" + cat + ", dog=" + dog + "]";
+	}
+------------------------------------------------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+    xmlns:context="http://www.springframework.org/schema/context" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd 
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-3.2.xsd">
+	
+	<bean id="dog" class="pojo.Dog">
+	    <property name="name" value="小狗狗"></property>
+	    <property name="age" value="2"></property>
+	</bean>
+	<bean id="cat" class="pojo.Cat">
+	    <property name="name" value="小猫猫"></property>
+	    <property name="age" value="3"></property>
+	</bean>
+	<!-- @Autowire注解：只能用在引用类型上面！！！！！ -->
+	<bean id="user" class="pojo.User"></bean>
+	<!-- 开启注解扫描器 :扫描类中的注解
+	     当spring加载配置文件时，会扫描项目中的类
+	     如果类中存在注解，那么进行解析-->
+	<context:annotation-config></context:annotation-config>
+	
+</beans>
+-----------------------------------------------------------------------
+package test;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import pojo.User;
+
+public class TestUtil {
+	//成员变量
+	ApplicationContext context = null;
+	//单元测试与before方法
+	@Before
+	public void before() {
+		context = new ClassPathXmlApplicationContext("applicationContext.xml");
+	}
+    @Test
+	public void test01() {
+		User user = (User) context.getBean("user");
+		System.out.println(user);
+	}
+}
