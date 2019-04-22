@@ -1,0 +1,181 @@
+package pojo;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+@Component
+public class Product {
+	//成员变量
+	@Value("测试商品007")
+	private String isbn;//商品编号
+	@Value("詹姆斯")
+	private String title;//商品名称
+	@Override
+	public String toString() {
+		return "Product [isbn=" + isbn + ", title=" + title + "]";
+	}
+	
+}
+------------------------------------------------------------------
+package dao;
+
+import pojo.Product;
+
+//接口：其中没有具体的方法体只有需要实现的方法
+//作用：程序员会根据开发经验先把需要处理的方法或者代码定义成接口
+//接口其实就相当于一张图纸或者一个计划表
+public interface ProductDao {
+	//插入一条数据的方法
+	public void addProduct(Product prod) ;
+}
+-------------------------------------------------------
+package dao;
+
+import org.springframework.stereotype.Repository;
+
+import pojo.Product;
+
+@Repository
+public  class ProductDaoImpl implements ProductDao{
+
+	@Override
+	public void addProduct(Product prod) {
+		// TODO Auto-generated method stub
+		System.out.println("成功的购买了一件商品"+prod);
+		
+	}
+
+}
+----------------------------------------------------
+package service;
+
+import pojo.Product;
+
+public interface ProductService {
+	//业务处理：增加一个商品，需要调用dao层
+	public void addProduct(Product prod);
+}
+-------------------------------------
+package service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import dao.ProductDao;
+import pojo.Product;
+
+@Service
+public class ProductServiceImpl implements ProductService{
+	
+	//需要dao层的方法
+	/*@autowired  
+	 * byName-->通过id去获取bean
+	 * byType-->通过class去获取bean
+	 * 使用的是byType方式获取的bean对象
+	 * 
+	 */
+	@Autowired
+	private ProductDao dao;
+	
+	
+	@Override
+	public void addProduct(Product prod) {
+		System.out.println("业务开始");
+		dao.addProduct(prod);
+		System.out.println("业务结束");
+		
+	}
+
+}
+------------------------------------------
+package controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+
+import pojo.Product;
+import service.ProductService;
+
+@Controller
+public class ProductController { 
+
+	//控制层依赖于service，需要调用service的方法
+	@Autowired
+	private ProductService ps;
+	
+	public void addProduct(Product prod) {
+		System.out.println("控制层开始调用service方法");
+		ps.addProduct(prod);
+		System.out.println("调用结束");
+	}
+}
+------------------------------------------------------
+package test;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import controller.ProductController;
+import dao.ProductDao;
+import pojo.Product;
+import service.ProductService;
+
+public class TestUtil {
+	//成员变量
+		ApplicationContext context = null;
+		//单元测试 与 before方法
+		@Before
+		public void before() {
+			context = 
+					new ClassPathXmlApplicationContext("applicationContext.xml");
+		}
+		//单元测试：model层的数据模型
+		@Test
+		public void test01() {
+			Product prod = (Product) context.getBean("product");
+			System.out.println(prod);
+		}
+		//单元测试：dao层的数据访问和操作
+		@Test
+		public void test02() {
+			ProductDao dao = (ProductDao) context.getBean("productDaoImpl");
+			//ProductDao dao = (ProductDao) context.getBean(ProductDao.class);
+			
+			dao.addProduct(null);
+			
+		}
+		//单元测试：service
+		@Test
+		public void test03() {
+			ProductService ps = (ProductService) context.getBean(ProductService.class);
+			ps.addProduct(null);
+		}
+		//单元测试：controller层控制
+		@Test
+		public void test04() {
+			ProductController pc = (ProductController) context.getBean("productController");
+			Product prod = (Product) context.getBean("product");
+			pc.addProduct(prod);
+		}
+
+}
+--------------------------------------------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:util="http://www.springframework.org/schema/util" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd 
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-3.2.xsd 
+	http://www.springframework.org/schema/util 
+	http://www.springframework.org/schema/util/spring-util-3.2.xsd">
+	
+	<!-- 开启包扫描器 -->
+	<context:component-scan base-package="pojo,dao,service,controller"></context:component-scan>
+	
+</beans>
+
