@@ -1,0 +1,214 @@
+package pojo;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+@Component
+public class Product {
+	@Value("小米手机")
+	private String name;//产品名字
+	@Value("1999.9")
+	private double price;//产品价格
+	
+	@Override
+	public String toString() {
+		return "Product [name=" + name + ", price=" + price + "]";
+	}	
+
+}
+--------------------------------------------------------------------------------
+package dao;
+
+import pojo.Product;
+
+public interface ProductDao {
+	public void deleteProduct(Product prod);
+
+}
+--------------------------------------------------------
+package dao;
+
+import org.springframework.stereotype.Repository;
+
+import pojo.Product;
+@Repository
+public class ProductDaoImpl implements ProductDao{
+
+	@Override
+	public void deleteProduct(Product prod) {
+		// TODO Auto-generated method stub
+		System.out.println("成功删除一件商品"+prod);
+		
+	}
+
+}
+---------------------------------------------------------------
+package service;
+
+import pojo.Product;
+
+public interface ProductService {
+	//该service接口的方法，最好与dao接口的方法一一对应
+	public void deleteProduct(Product prod);
+
+}
+-----------------------------------------------------------------
+package service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import dao.ProductDao;
+import pojo.Product;
+@Service(value="ps")
+public class ProductServiceImpl implements ProductService{
+	//需要调用dao层的方法,依赖注入dao的对象
+	@Autowired
+	private ProductDao dao;
+
+	@Override
+	public void deleteProduct(Product prod) {
+		// TODO Auto-generated method stub
+		System.out.println("业务开始");
+		dao.deleteProduct(prod);
+		System.out.println("业务结束");
+	}
+
+}
+----------------------------------------------------------------------------
+package controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+
+import pojo.Product;
+import service.ProductService;
+
+@Controller
+public class ProductController {
+	//需要调用service的方法,自动装配的注入
+	@Autowired
+	private ProductService ps;
+	
+	public void deleteProduct(Product prod) {
+		System.out.println("控制层调用service开始。。");
+		ps.deleteProduct(prod);
+		System.out.println("控制层调用service结束。。");
+	}
+	
+
+}
+-------------------------------------------------------------------------
+package tx;
+
+import org.springframework.stereotype.Component;
+//专门用于事务处理
+@Component(value="tx")
+public class TransactionManager {
+	//开启事务
+	public void open() {
+		System.out.println("开启事务");
+	}
+	//提交事务
+	public void commit() {
+		System.out.println("提交事务");
+	}
+
+}
+---------------------------------------------------------------
+package aspect;
+
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+//切面类，对所有的业务流添加事务控制
+
+import tx.TransactionManager;
+@Component
+public class TxAspect {
+	//调用事务模块
+	@Autowired
+	private TransactionManager tx;
+	
+	public void around(ProceedingJoinPoint joinPoint) {//joinpoint连接点
+		tx.open();
+		
+		try {
+			//调用业务层的方法		
+			joinPoint.proceed();
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		tx.commit();
+		
+	}
+}
+---------------------------------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:util="http://www.springframewoaoprk.org/schema/util" 
+    xmlns:aop="http://www.springframework.org/schema/aop" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd 
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-3.2.xsd 
+	http://www.springframework.org/schema/util 
+	http://www.springframework.org/schema/util/spring-util-3.2.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop-3.2.xsd">
+	
+	<!-- 开启包扫描 -->
+	<context:component-scan base-package="pojo,dao,service,controller,tx,test,aspect"></context:component-scan>
+	
+	<!-- 配置spring的AOP -->
+	<aop:config>
+	<!-- 配置切面类：id是由spring生成的 -->
+	    <aop:aspect ref="txAspect">
+	    <!-- 配置切入点：一定是在service层 -->
+	        <aop:pointcut expression="within(service.ProductServiceImpl)" id="pc"/>
+	        <!-- 配置环绕通知method调用的是切面类中的方法 -->
+	        <aop:around method="around" pointcut-ref="pc"/>
+	    </aop:aspect>
+	</aop:config>
+	
+	
+</beans>
+--------------------------------------------------------------------
+package test;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import controller.ProductController;
+import pojo.Product;
+
+public class TestUtil {
+	        //成员变量
+			ApplicationContext context = null;
+			//单元测试 与 before方法
+			@Before
+			public void before() {
+				context = 
+						new ClassPathXmlApplicationContext("applicationContext.xml");
+			}
+			
+			@Test
+			public void test04() {
+				ProductController pc = (ProductController) context.getBean("productController");
+				Product prod = (Product) context.getBean("product");
+				pc.deleteProduct(prod);
+			}
+}
+------------------------------------------------------------
+结果：控制层调用service开始。。
+开启事务
+业务开始
+成功删除一件商品Product [name=小米手机, price=1999.9]
+业务结束
+提交事务
+控制层调用service结束。。
