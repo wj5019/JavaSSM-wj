@@ -1,0 +1,317 @@
+package pojo;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+@Component
+public class Product {
+	@Value("小米手机")
+	private String name;//产品名字
+	@Value("1999.9")
+	private double price;//产品价格
+	
+	@Override
+	public String toString() {
+		return "Product [name=" + name + ", price=" + price + "]";
+	}
+	
+
+}
+------------------------------------------------------------
+package dao;
+
+import pojo.Product;
+
+public interface ProductDao {
+	public void deleteProduct(Product prod);
+
+}
+-------------------------------------------------------------
+package dao;
+
+import org.springframework.stereotype.Repository;
+
+import pojo.Product;
+@Repository
+public class ProductDaoImpl implements ProductDao{
+
+	@Override
+	public void deleteProduct(Product prod) {
+		// TODO Auto-generated method stub
+		System.out.println("成功删除一件商品"+prod);
+		
+	}
+
+}
+---------------------------------------------------------
+package service;
+
+import pojo.Product;
+
+public interface ProductService {
+	//该service接口的方法，最好与dao接口的方法一一对应
+	public void deleteProduct(Product prod);
+
+}
+--------------------------------------------------
+package service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import dao.ProductDao;
+import pojo.Product;
+@Service(value="ps")
+public class ProductServiceImpl implements ProductService{
+	//需要调用dao层的方法,依赖注入dao的对象
+	@Autowired
+	private ProductDao dao;
+
+	@Override
+	public void deleteProduct(Product prod) {
+		// TODO Auto-generated method stub
+		System.out.println("业务开始");
+		dao.deleteProduct(prod);
+		System.out.println("业务结束");
+	}
+
+}
+---------------------------------------------------------
+package service;
+
+public interface UserService {
+	public boolean addUser(String uname);
+
+}
+----------------------------------------------
+package service;
+
+import org.springframework.stereotype.Service;
+
+@Service(value="us")
+public class UserServiceImpl implements UserService{
+
+	@Override
+	public boolean addUser(String uname) {
+		// TODO Auto-generated method stub
+		System.out.println("业务开始");
+		System.out.println("新增用户是："+uname);
+		//添加一行测试异常的代码
+		//		int i=1/0;
+		System.out.println("业务结束");
+		return true;
+	}
+	
+
+}
+----------------------------------------------------
+package controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+
+import pojo.Product;
+import service.ProductService;
+
+@Controller
+public class ProductController {
+	//需要调用service的方法,自动装配的注入
+	@Autowired
+	private ProductService ps;
+	
+	public void deleteProduct(Product prod) {
+		System.out.println("控制层调用service开始。。");
+		ps.deleteProduct(prod);
+		System.out.println("控制层调用service结束。。");
+	}
+	
+
+}
+-------------------------------------------
+package controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Controller;
+
+import service.UserService;
+
+@Controller(value="uc")
+public class UserController {
+	@Autowired
+	@Qualifier(value="us")//指定根据id=us去找到对应的实现类             
+	private UserService us;
+	
+	public void addUser(String uname) {
+		System.out.println("控制层开始了");
+		boolean flag = us.addUser(uname);
+		System.out.println(flag);
+		System.out.println("控制层结束了");
+	}
+}
+------------------------------------------------
+package tx;
+
+import org.springframework.stereotype.Component;
+//专门用于事务处理
+@Component(value="tx")
+public class TransactionManager {
+	//开启事务
+	public void open() {
+		System.out.println("开启事务");
+	}
+	//提交事务
+	public void commit() {
+		System.out.println("提交事务");
+	}
+
+}
+-------------------------------------------------
+package aspect;
+
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.After;
+import org.aspectj.lang.annotation.AfterReturning;
+import org.aspectj.lang.annotation.AfterThrowing;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+//切面类，对所有的业务流添加事务控制
+
+import tx.TransactionManager;
+@Component
+@Aspect//切面类的注解
+public class TxAspect {
+	//调用事务模块
+	@Autowired
+	private TransactionManager tx;
+	
+	//切入点的注解
+	@Pointcut(value="execution(* service..*.*(..))")
+	public void pointcut() {//空切：空的切入点，和下面括号里的对应
+		//该方法名一般写为pointcut因为标签中<aop:pointcut>就是小写的
+		//在五大通知中，使用该方法名直接引用
+	}
+	
+	//使用户按绕通知：完成事务控制以及方法调用
+	@Around(value="pointcut()")
+	public Object around(ProceedingJoinPoint joinPoint) {//joinpoint连接点
+		tx.open();
+		Object result = null;
+		try {
+			//调用业务层的方法		
+			result = joinPoint.proceed();
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		tx.commit();
+		
+		return result;
+		
+	}
+	//前置通知
+	@Before(value="pointcut()")//导包选长的
+	public void before () {
+		System.out.println("我是前置通知！！！");
+	}
+	
+	
+	//最终通知
+	@After(value="pointcut()")
+	public void after() {
+		System.out.println("我是最终通知！！！");
+	}
+	
+	//后置通知
+	//<aop:afterReturning 表达式=""   返回值="">
+	@AfterReturning(value="pointcut()",returning="flag")
+	public void afterReturning(boolean flag) {
+		System.out.println("我是后置通知"+flag);
+	}
+	
+	//异常通知
+	//异常：Throwable
+	//运行时异常  编译时异常
+	@AfterThrowing(value="pointcut()",throwing="throwable")
+	public void afterThrowing(Throwable throwable) {
+		System.out.println("异常的信息："+throwable.getMessage());
+	}
+	
+}
+
+---------------------------------------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:util="http://www.springframewoaoprk.org/schema/util" 
+    xmlns:aop="http://www.springframework.org/schema/aop" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd 
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-3.2.xsd 
+	http://www.springframework.org/schema/util 
+	http://www.springframework.org/schema/util/spring-util-3.2.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop-3.2.xsd">
+	
+	<!-- 开启包扫描 -->
+	<context:component-scan base-package="pojo,dao,service,controller,tx,test,aspect"></context:component-scan>
+	
+
+	<!-- 开启AOP的注解扫描:切面类的自动代理
+	     当开启之后，切面类需要注解才能生效 -->
+	<aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+</beans>
+-------------------------------------------------------------
+package test;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import controller.ProductController;
+import controller.UserController;
+import pojo.Product;
+
+public class TestUtil {
+	        //成员变量
+			ApplicationContext context = null;
+			//单元测试 与 before方法
+			@Before
+			public void before() {
+				context = 
+						new ClassPathXmlApplicationContext("applicationContext.xml");
+			}
+			
+			@Test
+			public void test04() {
+				ProductController pc = (ProductController) context.getBean("productController");
+				Product prod = (Product) context.getBean("product");
+				pc.deleteProduct(prod);
+			}
+			@Test
+			public void test05() {
+				UserController uc = (UserController) context.getBean("uc");//和controller后面@值相关
+				
+				uc.addUser("吴彦祖");
+			}
+}
+------------------------------------------------------------------------
+控制层开始了
+开启事务
+我是前置通知！！！
+业务开始
+新增用户是：吴彦祖
+业务结束
+提交事务
+我是最终通知！！！
+我是后置通知true
+true
+控制层结束了
