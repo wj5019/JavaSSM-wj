@@ -1,0 +1,375 @@
+package pojo;
+
+import org.springframework.stereotype.Component;
+
+@Component
+public class User {
+	//定义成员变量
+	private String phone;
+	private String uname;
+	private String upwd;
+	private String email;
+	private int role;
+	public String getPhone() {
+		return phone;
+	}
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+	public String getUname() {
+		return uname;
+	}
+	public void setUname(String uname) {
+		this.uname = uname;
+	}
+	public String getUpwd() {
+		return upwd;
+	}
+	public void setUpwd(String upwd) {
+		this.upwd = upwd;
+	}
+	public String getEmail() {
+		return email;
+	}
+	public void setEmail(String email) {
+		this.email = email;
+	}
+	public int getRole() {
+		return role;
+	}
+	public void setRole(int role) {
+		this.role = role;
+	}
+	@Override
+	public String toString() {
+		return "User [phone=" + phone + ", uname=" + uname + ", upwd=" + upwd + ", email=" + email + ", role=" + role
+				+ "]";
+	}
+
+}
+-----------------------------------------------
+package dao;
+
+import pojo.User;
+
+public interface UserDao {
+	//增删改查四个方法
+	public void addUser(User user);
+	public void updateUser(User user);
+	public void deleteUser(String phone);
+	public void queryUsers();
+	//根据主键，查询某一个用户
+	public void queryUserById(String id);
+
+}
+----------------------------------------
+package dao;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
+
+import pojo.User;
+@Repository
+public class UserDaoImpl implements UserDao{
+	
+	//需要依赖spring的jdbc模板类对象
+	//完成jdbc访问数据库的操作
+	@Autowired
+	private JdbcTemplate jdbc;
+
+	@Override
+	public void addUser(User user) {
+		String sql = " insert into t_user values (?,?,?,?,?) "; 
+		//赋值的顺序按照问号的顺序进行
+		//问好的顺序指的是数据表里面的数据
+		int rows = jdbc.update(sql,
+		        user.getPhone(),
+		        user.getUname(),
+		        user.getUpwd(),
+		        user.getEmail(),
+		        user.getRole());
+		System.out.println("受影响的行数："+rows);
+	}
+		
+
+	@Override
+	public void updateUser(User user) {
+		String sql = " update t_user set uname=? where phone=? ";
+		String uname = user.getUname();
+		String phone = user.getPhone();
+		int rows = jdbc.update(sql,uname,phone);
+		System.out.println("受影响的行数;"+rows);
+		
+	}
+
+	@Override
+	public void deleteUser(String phone) {
+		String sql = "delete from t_user where phone=?";
+		int rows = jdbc.update(sql,phone);
+		System.out.println("受影响行数："+rows);
+		
+	}
+
+	@Override
+	public void queryUsers() {
+		String sql = "select * from t_user ";
+		//使用mapper结果集的映射
+		//spring专门提供了user对象的封装方法
+		//RowMapper专门用于pojo与数据库的映射规则,小括号里把user类型传进去
+		RowMapper<User> mapper = new BeanPropertyRowMapper<User>(User.class);
+		//jdbc根据mapper的映射规则，自动生成list集合
+		List<User> list = jdbc.query(sql, mapper);//根据mapper映射规则查
+		for(User user : list) {
+			System.out.println(user);
+		}
+		
+	}
+
+	@Override
+	public void queryUserById(String id) {
+		// TODO Auto-generated method stub
+		
+	}
+
+}
+------------------------------------------------------
+package service;
+
+import pojo.User;
+
+public interface UserService {
+	//增删改查四个方法
+    public void addUser(User user);
+	public void updateUser(User user);
+	public void deleteUser(String phone);
+	public void queryUsers();
+	//根据主键，查询某一个用户
+	public void queryUserById(String id);
+
+}
+----------------------------------------------------
+package service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import dao.UserDao;
+import pojo.User;
+
+@Service("us")
+public class UserServiceImpl implements UserService{
+
+	//调用dao层的方法
+	@Autowired
+	private UserDao dao;
+	
+	@Override
+	public void addUser(User user) {
+		// TODO Auto-generated method stub
+		dao.addUser(user);
+		//int i = 1/0;
+	}
+
+	@Override
+	public void updateUser(User user) {
+		// TODO Auto-generated method stub
+		dao.updateUser(user);
+	}
+
+	@Override
+	public void deleteUser(String phone) {
+		// TODO Auto-generated method stub
+		dao.deleteUser(phone);
+	}
+
+	@Override
+	public void queryUsers() {
+		// TODO Auto-generated method stub
+		dao.queryUsers();
+	}
+
+	@Override
+	public void queryUserById(String id) {
+		// TODO Auto-generated method stub
+		dao.queryUserById(id);
+	}
+
+}
+----------------------------------------------
+package controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+
+import pojo.User;
+import service.UserService;
+
+@Controller("uc")
+public class UserController {
+	
+	//调用service的方法
+	@Autowired
+	private UserService us;
+	
+	//自定义方法：增删改查的方法
+	//增删改查四个方法
+    public void addUser(User user){
+    	us.addUser(user);
+    }
+	public void updateUser(User user){
+		us.updateUser(user);
+	}
+	public void deleteUser(String phone) {
+		us.deleteUser(phone);
+	}
+	public void queryUsers() {
+		us.queryUsers();
+	}
+	//根据主键，查询某一个用户
+	public void queryUserById(String id) {
+		us.queryUserById(id);
+	}
+	
+
+}
+---------------------------------------------------
+package test;
+
+
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import controller.UserController;
+import pojo.User;
+
+public class TestUtil {
+	//成员变量
+	ApplicationContext context = null;
+	JdbcTemplate jdbc = null;
+	//before方法
+	@Before
+	public void before() {
+		context = new ClassPathXmlApplicationContext("applicationContext.xml");
+		
+	}
+	
+	@Test
+	public void test01() {
+		UserController uc = (UserController) context.getBean("uc");
+		//模拟用户的对象信息
+		User user = new User();
+		user.setEmail("101010");
+		user.setPhone("101010");
+		user.setUpwd("101010");
+		user.setRole(101010);
+		user.setUname("101010");
+		//调用controller层的addUser方法
+		uc.addUser(user);
+	}
+	
+	
+	
+	
+	
+	
+
+}
+-------------------------------------------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:util="http://www.springframework.org/schema/util" 
+    xmlns:aop="http://www.springframework.org/schema/aop" 
+    xmlns:tx="http://www.springframework.org/schema/tx" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd 
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-3.2.xsd 
+	http://www.springframework.org/schema/util 
+	http://www.springframework.org/schema/util/spring-util-3.2.xsd
+	http://www.springframework.org/schema/aop 
+	http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx-3.2.xsd">
+	
+	<!-- 开启包扫描 -->
+	<context:component-scan base-package="pojo,dao,service,controller,mapper,test"></context:component-scan>
+	
+	<!-- 引入外部的配置文件 -->
+	<context:property-placeholder location="classpath:/jdbc.properties"/>
+	
+	<!-- 1.配置数据源：专门用于访问数据库
+	访问mysql的url，driver，username，password -->
+	<!-- 这是由spring的ioc容器创建出来的c3p0的对象 -->
+	<!-- 不能使用注解代替bean标签，因为c3p0是第三方API，能用注解的是自己写的类，别的写的第三方不能用 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+	    <!-- 配置数据源需要的各个参数：jdbc.properties -->
+	    <property name="driverClass" value="${jdbc.driver}" ></property>
+		<property name="jdbcUrl" value="${jdbc.url}" ></property>
+		<property name="user" value="${jdbc.username}"></property>
+		<property name="password" value="${jdbc.password}"></property>
+		
+		<!-- 配置连接池的最大连接数 -->
+		<property name="maxPoolSize" value="20"></property>
+		<!-- 配置连接池的最小连接数 -->
+		<property name="minPoolSize" value="3"></property>
+	    
+	</bean>
+	
+	<!-- 2.配置jdbc的模板类：
+	  由spring提供的封装好的模板类，专门用于执行增删改查的语句 -->
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+	    <!-- 依赖注入第一步中配置好的数据源 -->
+	    <property name="dataSource" ref="dataSource"></property>
+	</bean>
+	
+	
+	<!-- 3.配置一个事务模块对象 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+	    <property name="dataSource" ref="dataSource"></property>
+	</bean>
+	
+	<!-- 4.配置事务的通知 -->
+	<!-- id="txAdvice"虽然程序员自定义，但是就写为txAdvice 
+	transaction-manager="transactionManager"可以不用写默认就使用了transactionManager-->
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+	<!-- 专门用于配置通知的方法 -->
+	    <tx:attributes>
+	        <!-- name="指的是业务中增删改查的方法" -->
+	        <!-- propahation=""事务的传播属性 
+	             REQUIRED：支持当前事务，如果当前没有事务，就新建一个事务。这是最常见的选择。 
+	             SUPPORTS：支持当前事务，如果当前没有事务，就以非事务方式执行。 -->
+	        <tx:method name="add*" propagation="REQUIRED"/>
+	        <tx:method name="update*" propagation="REQUIRED"/>
+	        <tx:method name="delete*" propagation="REQUIRED"/>
+	        <tx:method name="query*" propagation="SUPPORTS"/>
+	        <!-- 其余方法，都定义为只读方法 -->
+	        <tx:method name="*" read-only="true"/>
+	    </tx:attributes>
+	</tx:advice>
+	
+	<!-- 5.配置事务的切面类，切入点 ，引入通知-->
+	<aop:config>
+	     <aop:pointcut expression="execution(* service..*.*(..))" id="pc"/>
+	     <aop:advisor advice-ref="txAdvice" pointcut-ref="pc"/>
+	</aop:config>
+	
+	
+	
+	
+	
+</beans>
+-------------------------------------------------------------------------------
+jdbc.driver=com.mysql.jdbc.Driver
+jdbc.url=jdbc:mysql://localhost:3306/teduweb?charactorEncoding=utf-8
+jdbc.username=root
+jdbc.password=12345678
