@@ -1,0 +1,239 @@
+package pojo;
+
+import org.springframework.stereotype.Component;
+
+@Component
+public class User {
+	private String phone;
+	private String uname;
+	private String upwd;
+	private String email;
+	private int role;
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+	public void setUname(String uname) {
+		this.uname = uname;
+	}
+	public void setUpwd(String upwd) {
+		this.upwd = upwd;
+	}
+	public void setEmail(String email) {
+		this.email = email;
+	}
+	public void setRole(int role) {
+		this.role = role;
+	}
+	
+	public String getPhone() {
+		return phone;
+	}
+	public String getUname() {
+		return uname;
+	}
+	public String getUpwd() {
+		return upwd;
+	}
+	public String getEmail() {
+		return email;
+	}
+	public int getRole() {
+		return role;
+	}
+	@Override
+	public String toString() {
+		return "User [phone=" + phone + ", uname=" + uname + ", upwd=" + upwd + ", email=" + email + ", role=" + role
+				+ "]";
+	}
+	
+	
+
+}
+-----------------------------------------------------------
+package test;
+
+import java.util.List;
+import java.util.Map;
+
+
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+
+import pojo.User;
+
+public class TestUtil {
+	//成员变量
+	ApplicationContext context = null;
+	JdbcTemplate jdbc = null;
+	//before方法
+	@Before
+	public void before() {
+		context = new ClassPathXmlApplicationContext("applicationContext.xml");
+		//1.获取springjdbc的模板类
+	    jdbc = (JdbcTemplate) context.getBean("jdbcTemplate");
+	}
+
+	//test方法测试代码
+	
+	@Test
+	public void test01() {
+		//1.获取springjdbc的模板类
+		//jdbc = (JdbcTemplate) context.getBean("jdbcTemplate");
+		//2.编写sql语句
+		String sql = "insert into t_user values ('110','姜茶叔叔','110','110','0')";
+		//3.执行sql语句
+		int rows = jdbc.update(sql);
+		System.out.println("受影响的行数"+rows);
+	}
+	
+	@Test
+	public void test02() {
+		String sql = "update t_user set uname='姜茶哥哥' where phone='110'";
+		int rows = jdbc.update(sql);
+		System.out.println("受影响的行数"+rows);
+	}
+	
+	@Test
+	public void test03() {
+		String sql = "delete from t_user where phone='110'";
+		int rows = jdbc.update(sql);
+		System.out.println("受影响的行数"+rows);
+	}
+	
+	//动态的进行sql语句的赋值
+	@Test
+	public void test04() {
+		String sql = " insert into t_user values (?,?,?,?,?) ";
+		//模拟用户对象
+		User user = new User();
+		user.setEmail("666");
+		user.setPhone("666");
+		user.setUname("666");
+		user.setUpwd("666");
+		user.setRole(666);
+		//赋值的顺序按照问号的顺序进行
+		//问好的顺序指的是数据表里面的数据
+		int rows = jdbc.update(sql,
+		        user.getPhone(),
+		        user.getUname(),
+		        user.getUpwd(),
+		        user.getEmail(),
+		        user.getRole());
+		System.out.println("受影响的行数："+rows);
+	}
+	
+	@Test
+	public void test05() {//改
+		String sql = " update t_user set uname=? where phone=? ";
+		String uname = "张无忌";
+		String phone = "666";
+		int rows = jdbc.update(sql,uname,phone);
+		System.out.println("受影响的行数;"+rows);
+	}
+	
+	@Test
+	public void test06() {//删
+		String sql = "delete from t_user where phone=?";
+		String phone = "666";
+		int rows = jdbc.update(sql,phone);
+		System.out.println("受影响行数："+rows);
+	}
+	
+	//spring对查询的结果进行了封装
+	@Test
+	public void test07() {
+		String sql = "select * from t_user ";
+		//springJDBC已经完成了结果集的遍历和封装，不需要程序员手动编写代码
+		//先封装到map集合再封装到list集合中
+		List<Map<String,Object>> list = jdbc.queryForList(sql);
+		//循环遍历打印出结果集的每一条数据
+		for(Map<String, Object> map : list) {
+			System.out.println(map);
+		}
+		
+	}
+	
+	//问题：在test07中获取的结果集，不是List<对象类型>,是map集合
+	//结果：spring进行了结果集的泛型
+	@Test
+	public void test08() {
+		String sql = "select * from t_user ";
+		//使用mapper结果集的映射
+		//spring专门提供了user对象的封装方法
+		//RowMapper专门用于pojo与数据库的映射规则,小括号里把user类型传进去
+		RowMapper<User> mapper = new BeanPropertyRowMapper<User>(User.class);
+		//jdbc根据mapper的映射规则，自动生成list集合
+		List<User> list = jdbc.query(sql, mapper);//根据mapper映射规则查
+		for(User user : list) {
+			System.out.println(user);
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+}
+-----------------------------------------------------------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:util="http://www.springframework.org/schema/util" 
+    xmlns:aop="http://www.springframework.org/schema/aop" 
+    xmlns:tx="http://www.springframework.org/schema/tx" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd 
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-3.2.xsd 
+	http://www.springframework.org/schema/util 
+	http://www.springframework.org/schema/util/spring-util-3.2.xsd
+	http://www.springframework.org/schema/aop 
+	http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx-3.2.xsd">
+	
+	<!-- 开启包扫描 -->
+	<context:component-scan base-package="pojo"></context:component-scan>
+	
+	<!-- 引入外部的配置文件 -->
+	<context:property-placeholder location="classpath:/jdbc.properties"/>
+	
+	<!-- 1.配置数据源：专门用于访问数据库
+	访问mysql的url，driver，username，password -->
+	<!-- 这是由spring的ioc容器创建出来的c3p0的对象 -->
+	<!-- 不能使用注解代替bean标签，因为c3p0是第三方API，能用注解的是自己写的类，别的写的第三方不能用 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+	    <!-- 配置数据源需要的各个参数：jdbc.properties -->
+	    <property name="driverClass" value="${jdbc.driver}" ></property>
+		<property name="jdbcUrl" value="${jdbc.url}" ></property>
+		<property name="user" value="${jdbc.username}"></property>
+		<property name="password" value="${jdbc.password}"></property>
+		
+		<!-- 配置连接池的最大连接数 -->
+		<property name="maxPoolSize" value="20"></property>
+		<!-- 配置连接池的最小连接数 -->
+		<property name="minPoolSize" value="3"></property>
+	    
+	</bean>
+	
+	<!-- 2.配置jdbc的模板类：
+	  由spring提供的封装好的模板类，专门用于执行增删改查的语句 -->
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+	    <!-- 依赖注入第一步中配置好的数据源 -->
+	    <property name="dataSource" ref="dataSource"></property>
+	</bean>
+	
+</beans>
+--------------------------------------------------------------------------------------
+jdbc.driver=com.mysql.jdbc.Driver
+jdbc.url=jdbc:mysql://localhost:3306/teduweb?charactorEncoding=utf-8
+jdbc.username=root
+jdbc.password=12345678
