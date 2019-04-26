@@ -1,0 +1,213 @@
+package pojo;
+
+
+public class User {
+	//定义成员变量
+	private String phone;
+	private String uname;
+	private String upwd;
+	private String email;
+	private int role;
+	public String getPhone() {
+		return phone;
+	}
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+	public String getUname() {
+		return uname;
+	}
+	public void setUname(String uname) {
+		this.uname = uname;
+	}
+	public String getUpwd() {
+		return upwd;
+	}
+	public void setUpwd(String upwd) {
+		this.upwd = upwd;
+	}
+	public String getEmail() {
+		return email;
+	}
+	public void setEmail(String email) {
+		this.email = email;
+	}
+	public int getRole() {
+		return role;
+	}
+	public void setRole(int role) {
+		this.role = role;
+	}
+	@Override
+	public String toString() {
+		return "User [phone=" + phone + ", uname=" + uname + ", upwd=" + upwd + ", email=" + email + ", role=" + role
+				+ "]";
+	}
+
+}
+
+-----------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace:表示user对象的映射文件 的命名空间 其中的值，是该UserMapper.xml的唯一标识 -->
+<mapper namespace="pojo.UserMapper">
+	<!-- id=""唯一标识，标记sql语句的唯一性 每一个insert标签或者增删改查的标签都有一个id，不能重复 -->
+	<insert id="addUser">
+		insert into t_user values(#{phone},#{uname},#{upwd},#{email},#{role})
+	</insert>
+	<update id="updateUser">
+	    update t_user set uname=#{uname} where phone=#{phone}
+	</update>
+	<delete id="deleteUser">
+	    delete from t_user where phone=#{phone}
+	</delete>
+	<!-- resultType="包名.类名"
+	    作用：mybatis根据类名，自动封装成list -->
+	<select id="queryUsers" resultType="pojo.User">
+	    select * from t_user
+	</select> 
+</mapper>
+-----------------------------
+package test;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+import org.junit.Before;
+import org.junit.Test;
+
+import pojo.User;
+
+public class TestUtil {
+	//成员变量
+	InputStream in = null;//1。流读取文件
+	SqlSessionFactory factory = null;//2.
+	SqlSession sqlSession = null;//3.打开执行sql的对象，并执行sql语句
+	//模拟用户的数据信息
+	User user = null;
+	
+	@Before
+	public void Before() throws IOException {
+		//读取配置文件
+		in = Resources.getResourceAsStream("sqlMapConfig.xml");
+		//获取数据源信息
+		factory = new SqlSessionFactoryBuilder().build(in);
+		//获取执行sql的对象
+		sqlSession = factory.openSession();
+		//用户数据的赋值
+		user = new User();
+		user.setEmail("testMapper");
+		user.setPhone("testMapper");
+		user.setRole(1);
+		user.setUname("testMapper");
+		user.setUpwd("testMapper");
+	}
+	//使用输入流，把xml配置文件读取进来
+	@Test
+	public void test01() throws IOException {
+		//获得了xml配置文件的流
+		//InputStream in = Resources.getResourceAsStream("sqlMapConfig.xml");
+		//从流中获取数据源的配置信息
+		//SqlSessionFactory factory = new SqlSessionFactoryBuilder().build(in);
+		//打开数据库连接，获取sqlsession对象
+		//作用：专门用于执行sql语句
+		//SqlSession sqlSession = factory.openSession();
+		String str = sqlSession.toString();
+		System.out.println(str);
+	}
+	
+	@Test
+	public void addUser() {
+		//执行sql语句
+		//参数一：sql语句在xml配置文件中的唯一标识
+		//参数二：sql语句需要插入的数据对象
+		sqlSession.insert("pojo.UserMapper.addUser",user);
+		//特别重要：需要提交事务
+		sqlSession.commit();
+	}
+
+	@Test
+	public void updateUser() {
+		user.setUname("哈哈哈");
+		sqlSession.update("pojo.UserMapper.updateUser",user);
+		sqlSession.commit();
+	}
+	
+	@Test
+	public void deleteUser() {
+		//设置主键,对这条记录进行删除
+		user.setPhone("testMapper");
+		sqlSession.delete("pojo.UserMapper.deleteUser",user);
+		sqlSession.commit();
+	}
+	
+	@Test
+	public void queryUsers() {
+		List<User> list = sqlSession.selectList("pojo.UserMapper.queryUsers",user);
+		//查询不需要事务提交
+		//循环遍历list集合
+		for(User user : list) {
+			System.out.println(user);
+		}
+	}
+	
+	
+	
+}
+----------------------------------------------
+jdbc.driver=com.mysql.jdbc.Driver
+jdbc.url=jdbc:mysql://localhost:3306/teduweb?charactorEncoding=utf-8
+jdbc.username=root
+jdbc.password=12345678
+------------------------------------
+log4j.rootLogger=DEBUG, Console
+#Console
+log4j.appender.Console=org.apache.log4j.ConsoleAppender
+log4j.appender.Console.layout=org.apache.log4j.PatternLayout
+log4j.appender.Console.layout.ConversionPattern=%d [%t] %-5p [%c] - %m%n
+log4j.logger.java.sql.ResultSet=INFO
+log4j.logger.org.apache=INFO
+log4j.logger.java.sql.Connection=DEBUG
+log4j.logger.java.sql.Statement=DEBUG
+log4j.logger.java.sql.PreparedStatement=DEBUG
+---------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<!-- mybatis访问数据库的所有配置都在里面 -->
+<configuration>
+	<!-- 配置数据源的信息 -->
+	<environments default="mysql">
+		<!-- id=""程序员自定义的唯一标识 -->
+		<!-- environment：表示数据库厂商的配置环境 -->
+		<environment id="mysql">
+			<!-- 1.配置事务模块:规定事务是由JDBC类型管理的 -->
+			<transactionManager type="JDBC"></transactionManager>
+			<!-- 2.配置数据源信息 -->
+			<dataSource type="POOLED">
+				<property name="driver" value="com.mysql.jdbc.Driver" />
+				<property name="url"
+					value="jdbc:mysql://localhost:3306/teduweb?charactorEncoding=utf-8" />
+				<property name="username" value="root" />
+				<property name="password" value="12345678" />
+			</dataSource>
+		</environment>
+		<!-- 快捷键 ctrl+shift+f自动对齐 -->
+	</environments>
+	
+	<!-- 引入mapper的映射文件！！！ -->
+	<mappers>
+	<!-- 每一个pojo，对应这一个xxxMapper.xml -->
+	<!-- resource="包名/映射文件名" -->
+	    <mapper resource="pojo/UserMapper.xml"/>
+	</mappers>
+
+</configuration>
