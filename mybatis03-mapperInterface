@@ -1,0 +1,220 @@
+package pojo;
+/*
+ * mybatis中的pojo命名规则
+ *   1.成员变量名 <-->数据库的表列明
+ *   2.成员变量名 遵循 小驼峰式的命名
+ *   举例：表列明person_name,那么成员变量personName
+ */
+public class Person {
+	//成员变量
+	private Integer personId;
+	private String personName;
+	private Integer personAge;
+	public Integer getPersonId() {
+		return personId;
+	}
+	public void setPersonId(Integer personId) {
+		this.personId = personId;
+	}
+	public String getPersonName() {
+		return personName;
+	}
+	public void setPersonName(String personName) {
+		this.personName = personName;
+	}
+	public Integer getPersonAge() {
+		return personAge;
+	}
+	public void setPersonAge(Integer personAge) {
+		this.personAge = personAge;
+	}
+	@Override
+	public String toString() {
+		return "Person [personId=" + personId + ", personName=" + personName + ", personAge=" + personAge + "]";
+	}
+	
+}
+---------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 当使用mapper接口时，namespace=""必须写mapper接口的全路径 
+          作用：专门用于指定映射文件匹配接口文件-->
+<mapper namespace="mapper.PersonMapper">
+
+    <!-- 查询语句：单值查询！！！查询条件只有一个的情况下 -->
+    <!-- 程序员手动进行结果集的映射 -->
+    <resultMap type="pojo.Person" id="personMap">
+    <!-- 列名的每一个字段 对应 pojo的成员变量 -->
+    <!-- id标签表示表的主键必须这么写 ,其他列名用result-->
+    <id column="person_id" property="personId"></id>
+    <result column="person_name" property="personName"></result>
+    <result column="person_age" property="personAge"></result>
+    </resultMap>
+    
+    <select id="singleQuery" resultMap="personMap">
+        select * from person where person_name=#{fasdsafsdsdgfsfs}
+    </select>
+    
+    <!-- 多指传递：同一个表列名对应着一个区间查询 -->
+    <!-- 举例：person_age>=50  person+age<=55 -->
+    <!-- 查询年龄段在50到55之间的数据  两个值对应同一个字段-->
+    <!-- 答案：使用map集合，定义key与value -->
+    <select id="multiQuery" resultMap="personMap">
+        select * from person
+        where person_age >=#{min} and
+        <![CDATA[person_age <=#{max}]]>  <!-- 大段的转义字符 <默认为标签-->
+    </select>
+    
+    
+    <!-- 表列名或者字段名传递，特别注意：不是值，而是字段名  
+             举例：递增查询  ，根据列名进行排序select * from person order by 列名 
+             答案：使用map集合封装列名，但是使用${}取出其中的值 ，这里不是#{}-->
+    <select id="columnQuery" resultMap="personMap">
+        select * from person order by ${column1},${column2}
+    </select>
+
+
+</mapper>
+-----------------------------------------
+package mapper;
+
+import java.util.HashMap;
+import java.util.List;
+
+import pojo.Person;
+
+//专门用于匹配xxxMapper.xml中的sql语句
+//特别注意：程序员只需要编写接口即可
+//         mybatis自动生成接口的实现类
+public interface PersonMapper {
+	//查询方法:方法名=xxxMapper.xml中的id
+	//参数的定义：更具配置文件中的sql
+	public Person singleQuery(String name);
+	public List<Person> multiQuery(HashMap<String, Object> map);
+	public List<Person> columnQuery(HashMap<String, Object> map);
+}
+-----------------------------------------
+log4j.rootLogger=DEBUG, Console
+#Console
+log4j.appender.Console=org.apache.log4j.ConsoleAppender
+log4j.appender.Console.layout=org.apache.log4j.PatternLayout
+log4j.appender.Console.layout.ConversionPattern=%d [%t] %-5p [%c] - %m%n
+log4j.logger.java.sql.ResultSet=INFO
+log4j.logger.org.apache=INFO
+log4j.logger.java.sql.Connection=DEBUG
+log4j.logger.java.sql.Statement=DEBUG
+log4j.logger.java.sql.PreparedStatement=DEBUG
+----------------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <!-- 配置数据源的信息 -->
+	<environments default="mysql">
+		<!-- id=""程序员自定义的唯一标识 -->
+		<!-- environment：表示数据库厂商的配置环境 -->
+		<environment id="mysql">
+			<!-- 1.配置事务模块:规定事务是由JDBC类型管理的 -->
+			<transactionManager type="JDBC"></transactionManager>
+			<!-- 2.配置数据源信息 -->
+			<dataSource type="POOLED">
+				<property name="driver" value="com.mysql.jdbc.Driver" />
+				<property name="url"
+					value="jdbc:mysql://localhost:3306/mybatis?charactorEncoding=utf-8" />
+				<property name="username" value="root" />
+				<property name="password" value="12345678" />
+			</dataSource>
+		</environment>
+		<!-- 快捷键 ctrl+shift+f自动对齐 -->
+	</environments>
+	
+	<!-- 引入mapper的映射文件！！！ -->
+	<mappers>
+	<!-- 每一个pojo，对应这一个xxxMapper.xml -->
+	<!-- resource="包名/映射文件名" -->
+	    <mapper resource="pojo/PersonMapper.xml"/>
+	</mappers>
+
+</configuration>
+-----------------------------------
+package test;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.List;
+
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+import org.junit.Before;
+import org.junit.Test;
+
+import mapper.PersonMapper;
+import pojo.Person;
+
+public class TestUtil {
+    //成员变量
+	InputStream in = null;
+	SqlSessionFactory factory = null;
+	SqlSession sqlSession = null;
+	
+	@Before
+	public void before() throws IOException {
+		in = Resources.getResourceAsStream("sqlMapConfig.xml");
+		factory = new SqlSessionFactoryBuilder().build(in);
+		sqlSession = factory.openSession();
+	}
+	
+	@Test
+	public void test01() {
+		//单值查询
+		String name = "钢铁侠";
+		//Person person = sqlSession.selectOne("pojo.PersonMapper.singleQuery",name);
+		PersonMapper mapper = sqlSession.getMapper(PersonMapper.class);
+		Person person = mapper.singleQuery(name);
+		System.out.println(person);
+	}
+	
+	//多值传递
+	@Test
+	public void test02() {
+		//map集合封装多个值
+		HashMap<String, Object> map = new HashMap<String, Object>();
+		//年龄区间在50到55岁之间 【50,55】
+		int minAge = 50;
+		int maxAge = 55;
+		map.put("min",minAge);
+		map.put("max",maxAge);
+        //List<Person> list = sqlSession.selectList("pojo.PersonMapper.multiQuery",map);
+		//获得mapper接口的实现类
+		PersonMapper mapper = sqlSession.getMapper(PersonMapper.class);
+		List<Person> list = mapper.multiQuery(map);
+		//list的循环遍历
+		for(Person p : list) {
+			System.out.println(p);
+		}
+	}
+	
+	//表列名传递
+	@Test
+	public void test03() {
+		//使用map集合把列名封装
+		//需求根据person_age列名排序，把列名封装进去
+		HashMap<String, Object> map = new HashMap<String, Object>();
+		map.put("column1", "person_age");
+		map.put("column2", "person_name");
+		//List<Person> list = sqlSession.selectList("pojo.PersonMapper.columnQuery",map);
+		PersonMapper mapper = sqlSession.getMapper(PersonMapper.class);
+		//一定要写接口的class类型mybits自动生成对象,jdk的动态代理
+		List<Person> list = mapper.columnQuery(map);
+		for(Person p : list) {
+			System.out.println(p);
+		}
+	}
+}
+
