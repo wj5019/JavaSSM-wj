@@ -1,0 +1,256 @@
+package pojo;
+/*
+ * mybatis中的pojo命名规则
+ *   1.成员变量名 <-->数据库的表列明
+ *   2.成员变量名 遵循 小驼峰式的命名
+ *   举例：表列明person_name,那么成员变量personName
+ */
+public class Person {
+	//成员变量
+	private Integer personId;
+	private String personName;
+	private Integer personAge;
+	//成员变量：需要多表联查
+	//一对一关系的描述信息
+	private PersonInfo personInfo;
+	public Integer getPersonId() {
+		return personId;
+	}
+	public void setPersonId(Integer personId) {
+		this.personId = personId;
+	}
+	public String getPersonName() {
+		return personName;
+	}
+	public void setPersonName(String personName) {
+		this.personName = personName;
+	}
+	public Integer getPersonAge() {
+		return personAge;
+	}
+	public void setPersonAge(Integer personAge) {
+		this.personAge = personAge;
+	}
+	public PersonInfo getPersonInfo() {
+		return personInfo;
+	}
+	public void setPersonInfo(PersonInfo personInfo) {
+		this.personInfo = personInfo;
+	}
+	@Override
+	public String toString() {
+		return "Person [personId=" + personId + ", personName=" + personName + ", personAge=" + personAge
+				+ ", personInfo=" + personInfo + "]";
+	}
+	
+	
+	
+}
+
+--------------------------------------
+package pojo;
+
+public class PersonInfo {
+	private Integer personId;
+	private String personAddress;
+	private String personTel;
+	private String personQq;
+	public Integer getPersonId() {
+		return personId;
+	}
+	public void setPersonId(Integer personId) {
+		this.personId = personId;
+	}
+	public String getPersonAddress() {
+		return personAddress;
+	}
+	public void setPersonAddress(String personAddress) {
+		this.personAddress = personAddress;
+	}
+	public String getPersonTel() {
+		return personTel;
+	}
+	public void setPersonTel(String personTel) {
+		this.personTel = personTel;
+	}
+	public String getPersonQq() {
+		return personQq;
+	}
+	public void setPersonQq(String personQq) {
+		this.personQq = personQq;
+	}
+	@Override
+	public String toString() {
+		return "PersonInfo [personId=" + personId + ", personAddress=" + personAddress + ", personTel=" + personTel
+				+ ", personQq=" + personQq + "]";
+	}
+	
+}
+---------------
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 当使用mapper接口时，namespace=""必须写mapper接口的全路径 
+          作用：专门用于指定映射文件匹配接口文件-->
+<mapper namespace="mapper.PersonMapper">
+
+<!-- 一对一关系的描述 -->
+    <!-- resultMap中的type：是主表类型 
+                      id:程序员自定义的标识和resultMap对应-->
+    <!-- association中的javaType：是从表类型
+                        property：是Person类中引用对象名，personInfo变量名 -->
+    <resultMap type="pojo.Person" id="oneMap">
+        <!-- 主表中的字段映射关系 -->
+        <id column="person_id" property="personId"/>
+        <result column="person_name" property="personName"/>
+        <result column="person_age" property="personAge"/>
+      <association property="personInfo" javaType="pojo.PersonInfo">
+        <id column="person_id" property="personId"/>
+        <result column="person_address" property="personAddress"/>
+        <result column="person_tel" property="personTel"/>
+        <result column="person_qq" property="personQq"/>
+        </association>
+    </resultMap>
+
+    <!-- 一对一关系的描述 -->
+    <select id="oneMatchOne" resultMap="oneMap">
+        select i.*,p.person_name,p.person_age from
+        person p,
+        personinfo i
+        where p.person_id=i.person_id
+    </select>
+
+</mapper>
+-------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+<!-- 开启驼峰映射 -->
+	<settings>
+		<setting name="mapUnderscoreToCamelCase" value="true"/>
+	</settings>
+
+    <!-- 配置数据源的信息 -->
+	<environments default="mysql">
+		<!-- id=""程序员自定义的唯一标识 -->
+		<!-- environment：表示数据库厂商的配置环境 -->
+		<environment id="mysql">
+			<!-- 1.配置事务模块:规定事务是由JDBC类型管理的 -->
+			<transactionManager type="JDBC"></transactionManager>
+			<!-- 2.配置数据源信息 -->
+			<dataSource type="POOLED">
+				<property name="driver" value="com.mysql.jdbc.Driver" />
+				<property name="url"
+					value="jdbc:mysql://localhost:3306/mybatis?charactorEncoding=utf-8" />
+				<property name="username" value="root" />
+				<property name="password" value="12345678" />
+			</dataSource>
+		</environment>
+		<!-- 快捷键 ctrl+shift+f自动对齐 -->
+	</environments>
+	
+	<!-- 引入mapper的映射文件！！！ -->
+	<mappers>
+	<!-- 每一个pojo，对应这一个xxxMapper.xml -->
+	<!-- resource="包名/映射文件名" -->
+	    <mapper resource="pojo/PersonMapper.xml"/>
+	    <mapper resource="pojo/DeptMapper.xml"/>
+	    <mapper resource="pojo/TeacherMapper.xml"/>
+	    <mapper resource="pojo/StudentMapper.xml"/>
+	</mappers>
+
+</configuration>
+------------------------
+package mapper;
+
+import java.util.List;
+
+import pojo.Person;
+
+//专门用于匹配xxxMapper.xml中的sql语句
+//特别注意：程序员只需要编写接口即可
+//         mybatis自动生成接口的实现类
+public interface PersonMapper {
+	//一对一关系
+	public List<Person> oneMatchOne();
+}
+-------------------------------
+package test;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.List;
+
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.mapping.VendorDatabaseIdProvider;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+import org.junit.Before;
+import org.junit.Test;
+
+import mapper.PersonMapper;
+import mapper.StudentMapper;
+import mapper.TeacherMapper;
+import mapper.DeptMapper;
+import pojo.Dept;
+import pojo.Person;
+import pojo.Student;
+import pojo.Teacher;
+
+public class TestUtil {
+    //成员变量
+	InputStream in = null;
+	SqlSessionFactory factory = null;
+	SqlSession sqlSession = null;
+	PersonMapper mapper = null;
+	DeptMapper deptMapper = null;
+	TeacherMapper tMapper = null;
+	StudentMapper sMapper = null;
+	@Before
+	public void before() throws IOException {
+		in = Resources.getResourceAsStream("sqlMapConfig.xml");
+		factory = new SqlSessionFactoryBuilder().build(in);
+		sqlSession = factory.openSession();
+		mapper = sqlSession.getMapper(PersonMapper.class);
+		deptMapper = sqlSession.getMapper(DeptMapper.class);
+		tMapper = sqlSession.getMapper(TeacherMapper.class);
+		sMapper = sqlSession.getMapper(StudentMapper.class);
+	}
+	
+	//一对一关系的测试
+	@Test
+	public void test01() {
+		List<Person> list = mapper.oneMatchOne();
+		for (Person p : list) {
+			System.out.println(p);
+		}
+	}
+	//一对多
+	@Test
+	public void test02() {
+		List<Dept> list = deptMapper.oneMatchMore();
+		for (Dept p : list) {
+			System.out.println(p);
+		}
+	}
+	//多对多
+	@Test
+	public void test03() {
+		List<Teacher> list = tMapper.queryTeachers();
+		for(Teacher t : list) {
+			System.out.println(t);
+		}
+	}
+	@Test
+	public void test04() {
+		List<Student> list = sMapper.queryStudents();
+		for(Student s: list) {
+			System.out.println(s);
+		}
+	}
+}
