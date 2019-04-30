@@ -1,0 +1,237 @@
+package pojo;
+
+import java.util.List;
+
+public class Dept {
+	private Integer deptId;
+	private String deptName;
+	//一对多的关系，使用list集合作为成员变量
+	private List<User> userList;
+	
+	public Integer getDeptId() {
+		return deptId;
+	}
+	public void setDeptId(Integer deptId) {
+		this.deptId = deptId;
+	}
+	public String getDeptName() {
+		return deptName;
+	}
+	public void setDeptName(String deptName) {
+		this.deptName = deptName;
+	}
+	public List<User> getUserList() {
+		return userList;
+	}
+	public void setUserList(List<User> userList) {
+		this.userList = userList;
+	}
+	@Override
+	public String toString() {
+		return "Dept [deptId=" + deptId + ", deptName=" + deptName + ", userList=" + userList + "]";
+	}
+	
+
+}
+-----------------------------------
+package pojo;
+
+public class User {
+	private Integer id;
+	private String name;
+	private Integer age;
+	private String sex;
+	private Integer deptId;
+	public Integer getId() {
+		return id;
+	}
+	public void setId(Integer id) {
+		this.id = id;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public Integer getAge() {
+		return age;
+	}
+	public void setAge(Integer age) {
+		this.age = age;
+	}
+	public String getSex() {
+		return sex;
+	}
+	public void setSex(String sex) {
+		this.sex = sex;
+	}
+	public Integer getDeptId() {
+		return deptId;
+	}
+	public void setDeptId(Integer deptId) {
+		this.deptId = deptId;
+	}
+	@Override
+	public String toString() {
+		return "User [id=" + id + ", name=" + name + ", age=" + age + ", sex=" + sex + ", deptId=" + deptId + "]";
+	}
+
+}
+----------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mapper.DeptMapper">
+
+    <resultMap type="pojo.Dept" id="moreMap">
+        <id column="dept_id" property="deptId"/>
+        <result column="dept_name" property="deptName"/>
+    <!-- collection:表示一对多的从表 ofType:从表的pojo的类型-->
+    <collection property="userList" ofType="pojo.User">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="age" property="age"/>
+        <result column="sex" property="sex"/>
+        <result column="dept_id" property="deptId"/>
+    </collection>
+    </resultMap>
+    
+    <!-- 一对多的映射 -->
+    <select id="oneMatchMore" resultMap="moreMap">
+        select u.*,d.dept_name from
+        dept d
+        left join
+        user u
+        on d.dept_id=u.dept_id
+    </select>
+
+</mapper>
+------------------------------
+package mapper;
+
+import java.util.List;
+
+import pojo.Dept;
+
+public interface DeptMapper {
+	public List<Dept> oneMatchMore();
+}
+-----------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+<!-- 开启驼峰映射 -->
+	<settings>
+		<setting name="mapUnderscoreToCamelCase" value="true"/>
+	</settings>
+
+    <!-- 配置数据源的信息 -->
+	<environments default="mysql">
+		<!-- id=""程序员自定义的唯一标识 -->
+		<!-- environment：表示数据库厂商的配置环境 -->
+		<environment id="mysql">
+			<!-- 1.配置事务模块:规定事务是由JDBC类型管理的 -->
+			<transactionManager type="JDBC"></transactionManager>
+			<!-- 2.配置数据源信息 -->
+			<dataSource type="POOLED">
+				<property name="driver" value="com.mysql.jdbc.Driver" />
+				<property name="url"
+					value="jdbc:mysql://localhost:3306/mybatis?charactorEncoding=utf-8" />
+				<property name="username" value="root" />
+				<property name="password" value="12345678" />
+			</dataSource>
+		</environment>
+		<!-- 快捷键 ctrl+shift+f自动对齐 -->
+	</environments>
+	
+	<!-- 引入mapper的映射文件！！！ -->
+	<mappers>
+	<!-- 每一个pojo，对应这一个xxxMapper.xml -->
+	<!-- resource="包名/映射文件名" -->
+	    <mapper resource="pojo/PersonMapper.xml"/>
+	    <mapper resource="pojo/DeptMapper.xml"/>
+	    <mapper resource="pojo/TeacherMapper.xml"/>
+	    <mapper resource="pojo/StudentMapper.xml"/>
+	</mappers>
+
+</configuration>
+package test;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.List;
+
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.mapping.VendorDatabaseIdProvider;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+import org.junit.Before;
+import org.junit.Test;
+
+import mapper.PersonMapper;
+import mapper.StudentMapper;
+import mapper.TeacherMapper;
+import mapper.DeptMapper;
+import pojo.Dept;
+import pojo.Person;
+import pojo.Student;
+import pojo.Teacher;
+
+public class TestUtil {
+    //成员变量
+	InputStream in = null;
+	SqlSessionFactory factory = null;
+	SqlSession sqlSession = null;
+	PersonMapper mapper = null;
+	DeptMapper deptMapper = null;
+	TeacherMapper tMapper = null;
+	StudentMapper sMapper = null;
+	@Before
+	public void before() throws IOException {
+		in = Resources.getResourceAsStream("sqlMapConfig.xml");
+		factory = new SqlSessionFactoryBuilder().build(in);
+		sqlSession = factory.openSession();
+		mapper = sqlSession.getMapper(PersonMapper.class);
+		deptMapper = sqlSession.getMapper(DeptMapper.class);
+		tMapper = sqlSession.getMapper(TeacherMapper.class);
+		sMapper = sqlSession.getMapper(StudentMapper.class);
+	}
+	
+	//一对一关系的测试
+	@Test
+	public void test01() {
+		List<Person> list = mapper.oneMatchOne();
+		for (Person p : list) {
+			System.out.println(p);
+		}
+	}
+	//一对多
+	@Test
+	public void test02() {
+		List<Dept> list = deptMapper.oneMatchMore();
+		for (Dept p : list) {
+			System.out.println(p);
+		}
+	}
+	//多对多
+	@Test
+	public void test03() {
+		List<Teacher> list = tMapper.queryTeachers();
+		for(Teacher t : list) {
+			System.out.println(t);
+		}
+	}
+	@Test
+	public void test04() {
+		List<Student> list = sMapper.queryStudents();
+		for(Student s: list) {
+			System.out.println(s);
+		}
+	}
+}
