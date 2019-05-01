@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:context="http://www.springframework.org/schema/context" 
+	xmlns:mvc="http://www.springframework.org/schema/mvc" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd 
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-3.2.xsd 
+	http://www.springframework.org/schema/mvc 
+	http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd ">
+	
+	<!-- 配置url映射器：专门用于统一管理所有的url
+	                   HandlerMapping -->
+	<!-- 返回值结果是：url的数组，把请求url统一放入了数组中 -->
+	<bean class="org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping"></bean>
+	<!-- 配置url请求与controller控制层的关系 -->
+	<bean name="/hello" class="controller.HelloController"></bean>
+	<bean name="/addUser" class="controller.AddUserController"></bean>
+	<bean name="/updateUser" class="controller.UpdateUserController"></bean>
+	
+	<!-- 配置处理器适配器 ：HandlerAdapter  
+	          根据url的路径，找到controller的处理器 ，专门用于生成handler对象，
+	          用于执行controller层的方法-->
+	<bean class="org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter"></bean>
+	
+	<!-- 配置视图解析器：ViewResolver 专门用于页面的跳转，以及jsp页面的动态渲染 -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+	    <!-- 页面的前缀格式：固定写法指的是页面路径 -->
+	    <property name="prefix" value="/WEB-INF/"></property>
+	    <!-- 页面的后缀格式：固定写法指的是页面的后缀名 -->
+	    <property name="suffix" value=".jsp"></property>
+	</bean>
+	
+	
+	
+	
+	
+	
+	
+	
+</beans>
+-----------------------------------------------
+package controller;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.Controller;
+
+public class AddUserController implements Controller{
+
+	@Override
+	public ModelAndView handleRequest(HttpServletRequest arg0, HttpServletResponse arg1) throws Exception {
+		 ModelAndView mv = new ModelAndView();
+		 mv.addObject("addSuccess", "添加一个用户成功");
+		 mv.setViewName("addUser");
+		return mv;
+	}
+
+}
+--------------------------------------
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+    <h3>${addSuccess }</h3>
+    
+</body>
+</html>
+-----------------------------------------------
+package controller;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.Controller;
+
+public class HelloController implements Controller{
+
+	@Override
+	public ModelAndView handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		/*需求功能：
+		 * 请求：浏览器发起了一个请求叫做/hello
+		 * 响应：需要在页面中显示出来：hello springmvc
+		 * 
+		 */
+		//作用：专门用于封装数据以及页面跳转
+		//ModelAndView对应着视图解析器
+		//优点：完全替代了request对象与response对象
+		//原理：底层就是封装了request与response
+		ModelAndView mv = new ModelAndView();
+		//类似于request封装数据key=value键值对
+		mv.addObject("helloname", "hello springmvc！");
+		//页面跳转:经过视图解析器的处理形成了页面的路径：/WEB-INF/hello.jsp
+		mv.setViewName("hello");
+		return mv;
+	}
+
+}
+---------------------------------
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<h3>hellospringmvc终于等到你</h3>
+<h3>${helloname }</h3>
+
+</body>
+</html>
+---------------------------
+package controller;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.Controller;
+
+public class UpdateUserController implements Controller{
+
+	@Override
+	public ModelAndView handleRequest(HttpServletRequest arg0, HttpServletResponse arg1) throws Exception {
+		ModelAndView mv = new ModelAndView();
+		mv.addObject("updateSuccess", "数据修改成功");
+		mv.setViewName("updateUser");
+		return mv;
+	}
+
+}
+-----------------------------
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+  <h3>${updateSuccess }</h3>
+</body>
+</html>
