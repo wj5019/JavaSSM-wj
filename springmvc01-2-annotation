@@ -1,0 +1,120 @@
+package controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+//spring框架的注解，表示控制层
+@Controller//通过包扫描器进行扫描的
+public class UserController {
+	//该注解用于定义请求的url路径
+	//通过mvc的注解驱动器进行扫描的
+	@RequestMapping("/addUser")//请求
+	//springmvc可以自定义方法
+	public String add(Model model) {
+		model.addAttribute("addSuccess","添加成功");
+		return "addUser";//页面跳转
+	}
+	
+	@RequestMapping("/updateUser")
+	//注意：该方法的返回值类型一定是string
+	public String update(Model model) {
+		model.addAttribute("updateSuccess", "修改成功");
+		//返回值是页面名称，交给了视图解析器处理
+		return "updateUser";
+	}
+	
+	@RequestMapping("/deleteUser")
+	public String delete(Model model){
+		model.addAttribute("deleteSuccess", "删除成功");
+		return "deleteUser";
+	}
+	
+	@RequestMapping("/queryUser")
+	public String query(Model model) {
+		model.addAttribute("querySuccess", "查询成功");
+		return "queryUser";
+	}
+
+	
+}
+--------------------------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:context="http://www.springframework.org/schema/context" 
+	xmlns:mvc="http://www.springframework.org/schema/mvc" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd 
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-3.2.xsd 
+	http://www.springframework.org/schema/mvc 
+	http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd ">
+	
+	<!-- 配置url映射器：专门用于统一管理所有的url
+	                   HandlerMapping -->
+	<!-- 返回值结果是：url的数组，把请求url统一放入了数组中 -->
+	<!-- <bean class="org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping"></bean> -->
+	<!-- 配置url请求与controller控制层的关系 -->
+	<!-- <bean name="/hello" class="controller.HelloController"></bean>
+	<bean name="/addUser" class="controller.AddUserController"></bean>
+	<bean name="/updateUser" class="controller.UpdateUserController"></bean> -->
+	
+	<!-- 配置处理器适配器 ：HandlerAdapter  
+	          根据url的路径，找到controller的处理器 ，专门用于生成handler对象，
+	          用于执行controller层的方法-->
+	<!-- <bean class="org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter"></bean> -->
+	
+	<!-- 开启包扫描 -->
+	<context:component-scan base-package="controller"></context:component-scan>
+	<!-- 开启springmvc的注解扫描器 -->
+	<mvc:annotation-driven />
+	
+	<!-- 配置视图解析器：ViewResolver 专门用于页面的跳转，以及jsp页面的动态渲染 -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+	    <!-- 页面的前缀格式：固定写法指的是页面路径 -->
+	    <property name="prefix" value="/WEB-INF/"></property>
+	    <!-- 页面的后缀格式：固定写法指的是页面的后缀名 -->
+	    <property name="suffix" value=".jsp"></property>
+	</bean>
+	
+	
+	
+	
+	
+	
+	
+	
+</beans>
+-----------------------------------------------
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" version="3.0">
+  <display-name>springmvc01-1-firstDemo</display-name>
+  
+  <!-- 配置servlet，专门用于接受和响应所有的请求 -->
+  <servlet>
+      <!-- 相对固定的写法 -->
+      <servlet-name>springmvc</servlet-name>
+      <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+      <servlet-name>springmvc</servlet-name>
+      <!-- /：表示能够匹配所有的url路径 -->
+      <url-pattern>/</url-pattern>
+  </servlet-mapping>
+  
+</web-app>
+-----------------------------------------
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+    <h3>${addSuccess }</h3>
+    
+</body>
+</html>
