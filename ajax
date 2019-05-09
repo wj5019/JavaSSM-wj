@@ -1,0 +1,60 @@
+ //使用jquery框架，完成ajax
+	    $(function(){//页面加载时执行js函数
+	    	//ajax：当input文本框失去焦点时，校验
+	    	$("#deptId").blur(function(){
+	    		var deptId = $("#deptId").val();
+	    		//alert(deptId);
+	    		//ajax的异步请求
+	    		$.ajax({
+	    			url:"/sysadmin/dept/checkDeptId",//请求路径
+	    			data:{deptId:deptId},//传值的参数
+	    			type:"post",//请求的方式
+	    			dataType:"json",//ajax验证结果的格式
+	    			success:function(jieguo){//该结果为json的格式
+	    				//json其实是key：value的键值对形式
+	    				//举例：{result:true} {result:false}
+	    				if(jieguo.result == "true"){
+	    					alert("该部门编号已存在");
+	    				}else{
+	    					alert("该部门编号可使用");
+	    				}
+	    			}
+	    		})
+	    	});
+	    })
+      
+      
+      --------------------------------
+      //6.【部门管理】-->【ajax校验】
+	@RequestMapping("/sysadmin/dept/checkDeptId")
+	@ResponseBody//该注解专门用于返回ajax的结果
+	public JSONObject checkDeptId(String deptId) {
+		JSONObject json = new JSONObject();
+		//查询数据库,根据deptId获取部门信息
+		Dept dept = deptService.queryById(deptId);
+		//判断dept部门是否为空
+		if(dept == null) {//表示部门编号可以使用
+			json.put("result", "false");
+		}else {//表示部门编号已存在
+			json.put("result", "true");
+		}
+		//ajax异步，返回结果不是一个页面而是一个json对象，
+		//存放了数据{result:true}/{result:false}
+		return json;//对饮这jquery中的jieguo
+	}
+	
+	--------------------------
+  <!--json官方的坐标--> 
+		<dependency> 
+			<groupId>net.sf.json-lib</groupId> 
+			<artifactId>json-lib</artifactId> 
+			<version>2.4</version> 
+			<classifier>jdk15</classifier> 
+		</dependency> 
+		<!-- jackson --> 
+		<dependency> 
+			<groupId>com.fasterxml.jackson.core</groupId> 
+			<artifactId>jackson-databind</artifactId> 
+			<version>2.8.8.1</version> 
+		</dependency>	
+		
