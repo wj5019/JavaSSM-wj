@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.tarena.ht.mapper.UserMapper">
+
+    <!-- 结果集的手动封装 -->
+    <resultMap type="cn.tarena.ht.pojo.User" id="userMap" autoMapping="true">
+        <!-- 0.user的主键 -->
+        <id column="user_id" property="userId" />
+        <!-- 1.user与userinfo是一对一 -->
+        <association property="userInfo" javaType="cn.tarena.ht.pojo.UserInfo">
+            <id column="user_info_id" property="userInfoId" />
+			<result column="name" property="name" />
+			<result column="card_no" property="cardNo" />
+			<result column="join_date" property="joinDate" />
+			<result column="salary" property="salary" />
+			<result column="birthday" property="birthday" />
+			<result column="gender" property="gender" />
+			<result column="station" property="station" />
+			<result column="telephone" property="telephone" />
+			<result column="user_level" property="userLevel" />
+			<result column="remark" property="remark" />
+			<result column="order_no" property="orderNo"/>	  
+            <!-- 1.1 userinfo的自关联，一对一 -->
+            <association property="managerInfo" javaType="cn.tarena.ht.pojo.UserInfo">
+                <id column="m_id" property="userInfoId" />
+				<result column="m_name" property="name" />
+            </association>
+        </association>   
+        <!-- 2.user与dept是一对一 -->
+        <association property="dept" javaType="cn.tarena.ht.pojo.Dept">
+            <id column="dept_id" property="deptId" />
+			<result column="dept_name" property="deptName" />
+        </association>
+    </resultMap>
+
+
+
+
+
+    <!-- sql语句的复用 -->
+    <sql id="queryUserInfo">
+        <!-- userinfo表是自关联的表 -->
+        <!-- 自关联的目的：插叙每一个人的上级领导 -->
+        select 
+        p1.USER_INFO_ID,p1.NAME,p1.CARD_NO, 
+		p1.JOIN_DATE,p1.SALARY,p1.BIRTHDAY,p1.GENDER,p1.STATION,
+		p1.TELEPHONE,p1.USER_LEVEL,p1.REMARK,p1.ORDER_NO 
+		,p2.user_info_id as m_id,p2.name as m_name
+        from 
+        user_info_p p1
+        left join
+        user_info_p p2
+        on p1.manager_id=p2.user_info_id
+    </sql>
+    <sql id="queryUserAndUserInfo">
+    <!-- 两张表的关联：一对一关系user_p与user_info_p的自关联 -->
+        select * from 
+        user_p up
+        left join 
+        (<include refid="queryUserInfo"/>) ui
+        on up.user_id=ui.user_info_id
+    </sql>
+    <sql id="user-userinfo-dept"><!-- 三张表之间的关联 -->
+        select * from 
+        (<include refid="queryUserAndUserInfo"/>) u
+        left join
+        dept_p d
+        on u.dept_id=d.dept_id
+    </sql>
+    
+    <!-- 1.【用户管理】：列表查询 -->
+    <select id="queryUsers" resultMap="userMap"> 
+        <include refid="user-userinfo-dept"/>
+    </select>
+
+</mapper>
