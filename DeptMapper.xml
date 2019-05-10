@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- mapper namespace="mapper接口的包名.类名" -->
+<mapper namespace="cn.tarena.ht.mapper.DeptMapper">
+    <!-- 主从关系：一对一的自关联 -->
+    <resultMap type="cn.tarena.ht.pojo.Dept" id="deptMap" autoMapping="true">
+        <id column="dept_id" property="deptId"/>
+        <association property="parentDept" javaType="cn.tarena.ht.pojo.Dept">
+            <id column="p_id" property="deptId"/>
+            <result column="p_name" property="deptName"/>
+        </association>
+    </resultMap>
+    
+    <!-- sql语句的复用 -->
+    <sql id="query">
+     <!-- 表的自关联查询 d1主表：该部门的信息  d2从表：该部门上级部门信息-->
+        select d1.*,d2.dept_name p_name,d2.dept_id p_id
+        from 
+        dept_p d1
+        left join
+        dept_p d2
+        on d1.parent_id=d2.dept_id
+        
+    </sql>
+    
+    <!-- 1.部门管理：列表查询 -->
+    <select id="queryDepts" resultMap="deptMap">
+       <include refid="query"></include>
+       
+    </select>
+
+    <!-- 【部门管理启动和停用】 -->
+    <update id="updateStateById">
+    <!-- 特别注意：传了两个值所以封装在map集合中 -->
+        update dept_p set state=#{state}
+        <!-- where dept_id=#{deptId} -->
+        where dept_id in
+        <foreach collection="deptId" open="(" close=")" item="id" separator=",">
+            #{id}
+        </foreach>
+        <!-- where dept_id in('100','110','120') -->
+    </update>
+    
+      <!-- 部门管理：批量删除 -->
+      <delete id="deleteById">
+           delete from dept_p 
+           where dept_id in
+           <foreach collection="array" open="(" close= ")" item="id" separator=","  >
+                #{id}
+           </foreach>
+      </delete>
+      
+      <!-- 4.部门管理：保存按钮 -->
+     <insert id="save"><!-- 对应接口名 -->
+		insert into dept_p 
+		<trim prefix="(" suffix=")" 
+		      suffixOverrides=",">
+			<if test="deptId != null">dept_id,</if>
+			<if test="parentDept != null">parent_id,</if>
+			<if test="deptName !=null">dept_name,</if>
+			<if test="state!=null">state</if>
+		</trim> 
+		values 
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="deptId != null">#{deptId},</if>
+			<if test="parentDept != null">#{parentDept.deptId},</if>
+			<if test="deptName !=null">#{deptName},</if>
+			<if test="state!=null">#{state}</if>
+		</trim>
+	</insert>
+     <!-- 4.1校验主键冲突 -->
+     <select id="queryById" resultMap="deptMap">
+         <include refid="query"/> 
+         where d1.dept_id=#{deptId}
+     </select>
+
+</mapper>
