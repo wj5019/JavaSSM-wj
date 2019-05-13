@@ -1,0 +1,62 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>zTree树的入门案例</title>
+<!-- 1.导入zTree树的css样式 -->
+<link rel="stylesheet" href="${ctx }/staticfile/components/zTree/css/zTreeStyle/zTreeStyle.css" /> 
+<!-- 2.导入zTree树的js脚本 -->
+<script type="text/javascript" src="${ctx }/staticfile/components/zTree/js/jquery-1.4.4.min.js" ></script>
+<script type="text/javascript" src="${ctx }/staticfile/components/zTree/js/jquery.ztree.core-3.5.min.js" ></script>
+<script type="text/javascript" src="${ctx }/staticfile/components/zTree/js/jquery.ztree.excheck-3.5.min.js" ></script>
+<!-- 3.编写自定义脚本：zTree的使用方法 -->
+<script type="text/javascript">
+	//1.配置zTree的核心配置文件
+	//固定写法，不能改变
+	var setting={ //配置文件的基本格式 
+			check:{
+				enable:true //是否显示复选框/单选按钮的节点 
+			},
+			data:{//数据格式 
+				simpleData:{//是否使用简单数据模型
+					enable:true 
+				}
+			}
+	}
+	//2.配置zTree的资料数据  
+	var zNodes = 
+		//[]表示 数据模型是 数组类型的！！
+		[
+			//"id": / "pId" / "name"  该格式是固定写法
+			//id表示当前节点的唯一编号 
+			//pId表示当前节点的父节点编号
+			//name表示当前节点的名称 
+			{"id":1,"pId":0,"name":"爷爷"},//{}大括号中存放了数据 
+			{"id":2,"pId":1,"name":"爸爸"},
+			{"id":3,"pId":2,"name":"儿子"}
+		]
+	//3.使用jQuery展示zTree的数据结构
+	//页面的加载函数，刷新页面时，直接执行 
+	$(document).ready(function() {
+		////3.1初始化zTree 
+		$.fn.zTree.init($("#htZtree"),setting,zNodes);
+		////3.2把数据模型的数据 转换为 zTree的格式 
+		var zTreeObj = $.fn.zTree.getZTreeObj("htZtree");
+		////3.3展示zTree树的所有节点
+		//进入页面，所有节点自动全部打开 
+		zTreeObj.expandAll(true);
+	})
+	
+</script>
+</head>
+<body>
+	<!-- 4.zTree树的数据需要展示到html页面 -->
+	<div>
+		<ul id="htZtree" class="zTree"></ul>
+	</div>
+</body>
+</html>
+
+
