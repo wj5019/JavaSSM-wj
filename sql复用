@@ -1,0 +1,25 @@
+<!-- 手动封装结果集 -->
+    <resultMap type="cn.tarena.ht.pojo.Module" id="moduleMap" autoMapping="true">
+        <id column="module_id" property="moduleId"/>
+        <!-- 一对一的自关联关系 -->
+        <association property="parentModule" javaType="cn.tarena.ht.pojo.Module">
+            <id column="p_id" property="moduleId" />
+            <result column="p_name" property="name"/>
+        </association>
+    </resultMap>
+    <!-- sql语句的重复使用 -->
+    <sql id="query">
+    select m1.*,m1.module_id as id,m1.parent_id as p_id,
+    m2.parent_id as p_id,m2.name as p_name 
+    from 
+    module_p m1 
+    left join 
+    module_p m2 
+    on m1.parent_id=m2.module_id
+    </sql>
+
+    <!-- 1.【模块管理】：【列表查询】 -->
+    <select id="queryModules" resultMap="moduleMap">
+        <include refid="query"/>order by order_no
+    
+    </select>
